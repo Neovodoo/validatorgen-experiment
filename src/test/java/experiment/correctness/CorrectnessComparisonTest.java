@@ -3,6 +3,7 @@ package experiment.correctness;
 import experiment.common.ValidationAdapter;
 import experiment.dataset.MoneyTransferTestCase;
 import experiment.dataset.MoneyTransferTestCases;
+import experiment.generated.explicit.GeneratedExplicitValidationAdapter;
 import experiment.manual.explicit.ManualExplicitValidationAdapter;
 import experiment.manual.jakarta.ManualJakartaValidationAdapter;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,8 @@ class CorrectnessComparisonTest {
 
     private final List<ValidationAdapter> adapters = List.of(
             new ManualExplicitValidationAdapter(),
-            new ManualJakartaValidationAdapter()
+            new ManualJakartaValidationAdapter(),
+            new GeneratedExplicitValidationAdapter()
     );
 
     @Test
