@@ -1,6 +1,5 @@
-package common;
+package experiment.common;
 
-import experiment.common.ViolationView;
 import experiment.dto.MoneyTransferDto;
 import org.junit.jupiter.api.Test;
 
