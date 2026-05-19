@@ -7,6 +7,7 @@ import experiment.generated.explicit.GeneratedExplicitValidationAdapter;
 import experiment.generated.jakarta.GeneratedJakartaValidationAdapter;
 import experiment.manual.explicit.ManualExplicitValidationAdapter;
 import experiment.manual.jakarta.ManualJakartaValidationAdapter;
+import experiment.ruleengine.RuleEngineValidationAdapter;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +20,8 @@ class CorrectnessComparisonTest {
             new ManualExplicitValidationAdapter(),
             new ManualJakartaValidationAdapter(),
             new GeneratedExplicitValidationAdapter(),
-            new GeneratedJakartaValidationAdapter()
+            new GeneratedJakartaValidationAdapter(),
+            new RuleEngineValidationAdapter()
     );
 
     @Test

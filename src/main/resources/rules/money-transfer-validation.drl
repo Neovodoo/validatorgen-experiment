@@ -1,0 +1,226 @@
+package experiment.ruleengine
+
+import experiment.dto.MoneyTransferDto;
+import experiment.ruleengine.RuleEngineViolation;
+
+global java.util.List violations;
+
+dialect "java"
+
+rule "CF-01 amountCents > feeCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getAmountCents() == null
+        || $dto.getFeeCents() == null
+        || $dto.getAmountCents() <= $dto.getFeeCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-01",
+        "feeCents",
+        "Fee must be less than transfer amount"
+    ));
+end
+
+rule "CF-02 amountCents > taxCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getAmountCents() == null
+        || $dto.getTaxCents() == null
+        || $dto.getAmountCents() <= $dto.getTaxCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-02",
+        "taxCents",
+        "Tax must be less than transfer amount"
+    ));
+end
+
+rule "CF-03 amountCents >= minAllowedAmountCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getAmountCents() == null
+        || $dto.getMinAllowedAmountCents() == null
+        || $dto.getAmountCents() < $dto.getMinAllowedAmountCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-03",
+        "amountCents",
+        "Transfer amount must not be below minimum allowed amount"
+    ));
+end
+
+rule "CF-04 amountCents <= maxAllowedAmountCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getAmountCents() == null
+        || $dto.getMaxAllowedAmountCents() == null
+        || $dto.getAmountCents() > $dto.getMaxAllowedAmountCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-04",
+        "amountCents",
+        "Transfer amount must not exceed maximum allowed amount"
+    ));
+end
+
+rule "CF-05 amountCents <= availableBalanceCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getAmountCents() == null
+        || $dto.getAvailableBalanceCents() == null
+        || $dto.getAmountCents() > $dto.getAvailableBalanceCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-05",
+        "amountCents",
+        "Transfer amount must not exceed available balance"
+    ));
+end
+
+rule "CF-06 totalDebitCents <= availableBalanceCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getTotalDebitCents() == null
+        || $dto.getAvailableBalanceCents() == null
+        || $dto.getTotalDebitCents() > $dto.getAvailableBalanceCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-06",
+        "totalDebitCents",
+        "Total debit must not exceed available balance"
+    ));
+end
+
+rule "CF-07 totalDebitCents <= dailyLimitCents"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getTotalDebitCents() == null
+        || $dto.getDailyLimitCents() == null
+        || $dto.getTotalDebitCents() > $dto.getDailyLimitCents())
+then
+    violations.add(new RuleEngineViolation(
+        "CF-07",
+        "totalDebitCents",
+        "Total debit must not exceed daily limit"
+    ));
+end
+
+rule "CF-08 senderAccount != receiverAccount"
+when
+    $dto : MoneyTransferDto()
+    eval($dto.getSenderAccount() == null
+        || $dto.getSenderAccount().isBlank()
+        || $dto.getReceiverAccount() == null
+        || $dto.getReceiverAccount().isBlank()
+        || java.util.Objects.equals($dto.getSenderAccount(), $dto.getReceiverAccount()))
+then
+    violations.add(new RuleEngineViolation(
+        "CF-08",
+        "receiverAccount",
+        "Sender and receiver accounts must be different"
+    ));
+end
+
+rule "RI-01 scheduledAt required if transferType == SCHEDULED"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getTransferType(), "SCHEDULED")
+        && $dto.getScheduledAt() == null)
+then
+    violations.add(new RuleEngineViolation(
+        "RI-01",
+        "scheduledAt",
+        "Scheduled transfer must have scheduled date"
+    ));
+end
+
+rule "RI-02 executedAt required if status == EXECUTED"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getStatus(), "EXECUTED")
+        && $dto.getExecutedAt() == null)
+then
+    violations.add(new RuleEngineViolation(
+        "RI-02",
+        "executedAt",
+        "Executed transfer must have execution date"
+    ));
+end
+
+rule "RI-03 cancelledAt required if status == CANCELLED"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getStatus(), "CANCELLED")
+        && $dto.getCancelledAt() == null)
+then
+    violations.add(new RuleEngineViolation(
+        "RI-03",
+        "cancelledAt",
+        "Cancelled transfer must have cancellation date"
+    ));
+end
+
+rule "RI-04 confirmationCode required if requiresConfirmation == true"
+when
+    $dto : MoneyTransferDto()
+    eval(java.lang.Boolean.TRUE.equals($dto.getRequiresConfirmation())
+        && ($dto.getConfirmationCode() == null || $dto.getConfirmationCode().isBlank()))
+then
+    violations.add(new RuleEngineViolation(
+        "RI-04",
+        "confirmationCode",
+        "Confirmation code is required when confirmation is enabled"
+    ));
+end
+
+rule "RI-05 templateName required if saveTemplate == true"
+when
+    $dto : MoneyTransferDto()
+    eval(java.lang.Boolean.TRUE.equals($dto.getSaveTemplate())
+        && ($dto.getTemplateName() == null || $dto.getTemplateName().isBlank()))
+then
+    violations.add(new RuleEngineViolation(
+        "RI-05",
+        "templateName",
+        "Template name is required when saving transfer as template"
+    ));
+end
+
+rule "RI-06 eventType required if channel == KAFKA"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getChannel(), "KAFKA")
+        && ($dto.getEventType() == null || $dto.getEventType().isBlank()))
+then
+    violations.add(new RuleEngineViolation(
+        "RI-06",
+        "eventType",
+        "Kafka transfer event must have event type"
+    ));
+end
+
+rule "RI-07 eventKey required if channel == KAFKA"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getChannel(), "KAFKA")
+        && ($dto.getEventKey() == null || $dto.getEventKey().isBlank()))
+then
+    violations.add(new RuleEngineViolation(
+        "RI-07",
+        "eventKey",
+        "Kafka transfer event must have event key"
+    ));
+end
+
+rule "RI-08 requestId required if channel == API"
+when
+    $dto : MoneyTransferDto()
+    eval(java.util.Objects.equals($dto.getChannel(), "API")
+        && ($dto.getRequestId() == null || $dto.getRequestId().isBlank()))
+then
+    violations.add(new RuleEngineViolation(
+        "RI-08",
+        "requestId",
+        "API transfer request must have request id"
+    ));
+end
